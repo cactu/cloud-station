@@ -25,6 +25,7 @@ func TestListBucket(t *testing.T) {
 
 	for _, bucket := range lsRes.Buckets {
 		fmt.Println("Buckets:", bucket.Name)
+		fmt.Println()
 	}
 }
 
