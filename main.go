@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 	"github.com/cactu/cloud-station/config"
 	"os"
 )
@@ -22,7 +23,13 @@ func uploadFile(filePath string) {
 		fmt.Println(err)
 		return
 	}
+	downloadUrl, err := bucket.SignURL(filePath, oss.HTTPGet, 60*60*24)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	fmt.Printf("上传文件 %s 成功\n", filePath)
+	fmt.Printf("下载链接是:【%s】", downloadUrl)
 }
 
 //参数校验
