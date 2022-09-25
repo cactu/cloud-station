@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 	"github.com/cactu/cloud-station/env"
+	"github.com/schollz/progressbar/v3"
 )
 
 type AliOssParams struct {
@@ -13,7 +14,33 @@ type AliOssParams struct {
 }
 
 type AliOssStore struct {
-	client *oss.Client
+	client   *oss.Client
+	listener *Listener
+}
+
+type Listener struct {
+	bar *progressbar.ProgressBar
+}
+
+func (l *Listener) ProgressChanged(event *oss.ProgressEvent) {
+	switch event.EventType {
+	case oss.TransferStartedEvent:
+		fmt.Printf("文件开始上传\n")
+		l.bar = progressbar.DefaultBytes(event.TotalBytes)
+	case oss.TransferDataEvent:
+		err := l.bar.Add64(event.RwBytes)
+		if err != nil {
+			fmt.Printf("文件上传失败,%s\n", err)
+		}
+	case oss.TransferCompletedEvent:
+		fmt.Printf("上传完成\n")
+	case oss.TransferFailedEvent:
+		fmt.Printf("上传失败\n")
+	}
+}
+
+func NewProgressListener() *Listener {
+	return &Listener{}
 }
 
 func (params *AliOssParams) Validate() error {
@@ -43,7 +70,8 @@ func NewAliOssStore(params *AliOssParams) (*AliOssStore, error) {
 		return nil, err
 	}
 	store := &AliOssStore{
-		client: client,
+		client:   client,
+		listener: NewProgressListener(),
 	}
 	return store, nil
 }
@@ -54,7 +82,7 @@ func (s *AliOssStore) Upload(bucketName, objectKet, fileName string) error {
 		return err
 	}
 
-	err = bucket.PutObjectFromFile(objectKet, fileName)
+	err = bucket.PutObjectFromFile(objectKet, fileName, oss.Progress(s.listener))
 	if err != nil {
 		return err
 	}
