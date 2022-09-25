@@ -3,19 +3,11 @@ package example
 import (
 	"fmt"
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
-	"github.com/joho/godotenv"
-	"os"
+	"github.com/cactu/cloud-station/env"
 	"testing"
 )
 
 var client *oss.Client
-
-var (
-	AccessKey    string
-	AccessSecret string
-	OssEndPoint  string
-	BucketName   string
-)
 
 func TestListBucket(t *testing.T) {
 	lsRes, err := client.ListBuckets()
@@ -29,7 +21,7 @@ func TestListBucket(t *testing.T) {
 }
 
 func TestUploadFile(t *testing.T) {
-	bucket, err := client.Bucket(BucketName)
+	bucket, err := client.Bucket(env.Config.BucketName)
 	if err != nil {
 		t.Log(err)
 	}
@@ -41,17 +33,8 @@ func TestUploadFile(t *testing.T) {
 }
 
 func init() {
-	//初始化配置文件
-	err := godotenv.Load("../etc/test.env")
-	if err != nil {
-		panic(err)
-	}
-	AccessKey = os.Getenv("ALI_AK")
-	AccessSecret = os.Getenv("ALI_SK")
-	OssEndPoint = os.Getenv("ALI_OSS_ENDPOINT")
-	BucketName = os.Getenv("ALI_BUCKET_NAME")
 	//初始化oss链接
-	c, err := oss.New(OssEndPoint, AccessKey, AccessSecret)
+	c, err := oss.New(env.Config.Endpoint, env.Config.AccessKey, env.Config.AccessSecret)
 	if err != nil {
 		panic(err)
 	}
